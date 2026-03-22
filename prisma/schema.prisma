@@ -1,0 +1,157 @@
+// La Madrina Bakery — Prisma schema (MongoDB)
+// Use: npx prisma db push  (MongoDB does not use migrations)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// Admin users (login for dashboard)
+model AdminUser {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  email        String   @unique
+  passwordHash String
+  active       Boolean  @default(true) // missing on legacy Mongo docs = treated as active in app
+  createdAt    DateTime @default(now())
+}
+
+// Admin actions (no PII in details JSON)
+model AdminAuditLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  adminId     String   @db.ObjectId
+  adminEmail  String
+  action      String // e.g. economics.update, product.delete
+  resource    String // economics_config, product, order, expense, ingredient
+  resourceId  String?
+  details     String? // JSON string, summaries only
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([adminId])
+}
+
+// Product catalog
+model Product {
+  id                  String      @id @default(auto()) @map("_id") @db.ObjectId
+  name                String
+  description         String?
+  imageUrl            String?     // public URL for shop gallery (HTTPS)
+  basePriceCents      Int
+  estimatedCostCents   Int?        // ingredient + packaging cost for margin calc
+  category            String      // e.g. "bread", "pastries", "cakes", "custom"
+  active              Boolean     @default(true)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  orderItems          OrderItem[]
+  recipe              ProductRecipe?
+  shopAnalyticsEvents ShopAnalyticsEvent[]
+}
+
+// Customer order (guest checkout; no customer account required for v1)
+model Order {
+  id             String      @id @default(auto()) @map("_id") @db.ObjectId
+  customerName   String
+  customerEmail  String
+  customerPhone  String?
+  preferredDate  DateTime?   // requested pickup/delivery date
+  status         String      @default("pending") // pending | confirmed | completed | cancelled
+  totalCents     Int
+  notes          String?
+  channel        String?    // web | walk-in | phone | delivery-app | wholesale
+  orderType      String?    // pickup | delivery
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  items          OrderItem[]
+
+  @@index([createdAt])
+  @@index([status, createdAt])
+}
+
+// Line item: product + quantity + price at time of order + custom specs
+model OrderItem {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId           String   @db.ObjectId
+  order             Order    @relation(fields: [orderId], references: [id])
+  productId         String   @db.ObjectId
+  product           Product  @relation(fields: [productId], references: [id])
+  quantity          Int
+  unitPriceCents    Int
+  specifications    String?  // JSON: { "message": "...", "allergies": "...", "options": [] }
+  createdAt         DateTime @default(now())
+}
+
+// Anonymous shop funnel events (public write; no PII)
+model ShopAnalyticsEvent {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventType String // shop_view | product_view | add_to_cart | begin_checkout
+  productId String?  @db.ObjectId
+  product   Product? @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Business expenses (admin-only)
+model Expense {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  date         DateTime
+  category     String   // e.g. "ingredients", "labor", "rent", "utilities", "marketing", "other"
+  amountCents  Int
+  description  String?
+  isFixed      Boolean  @default(false) // rent, insurance vs variable (ingredients, labor)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// Ingredients purchased by the bakery (for recipe costing)
+model Ingredient {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  unit              String   // e.g. g, kg, ml, L, piece
+  purchaseQuantity  Float    // in `unit`
+  purchaseCostCents Int      // total cost of the purchase unit
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  recipeLines       ProductIngredient[]
+}
+
+// Recipe-level configuration per product
+model ProductRecipe {
+  id                     String   @id @default(auto()) @map("_id") @db.ObjectId
+  productId              String   @unique @db.ObjectId
+  product                Product  @relation(fields: [productId], references: [id])
+  batchSize              Int      // number of sale units per batch
+  laborMinutesPerBatch   Float    // hands-on minutes per batch
+  laborRateCentsPerHour  Int?     // optional override; if null, use config default
+  overheadCentsPerBatch  Int?     // optional override; if null, derive from config
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  ingredients            ProductIngredient[]
+}
+
+// Ingredients used in a product recipe
+model ProductIngredient {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  recipeId      String         @db.ObjectId
+  recipe        ProductRecipe  @relation(fields: [recipeId], references: [id])
+  ingredientId  String         @db.ObjectId
+  ingredient    Ingredient     @relation(fields: [ingredientId], references: [id])
+  amount        Float          // quantity per batch, in Ingredient.unit
+  wasteFactor   Float          @default(0) // 0-1, expected waste share
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+// Global economics settings (singleton document)
+model EconomicsConfig {
+  id                           String   @id @default(auto()) @map("_id") @db.ObjectId
+  defaultLaborRateCentsPerHour Int      // default hourly labor rate
+  monthlyFixedCostsCents       Int      // rent + utilities + insurance + other fixed
+  estimatedBatchesPerMonth     Int      // used to allocate fixed costs per batch
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
+}
