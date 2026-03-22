@@ -1280,3 +1280,20 @@ a:hover {
   padding: 0.35rem 0.65rem;
   font-size: 0.8rem;
 }
+
+@media print {
+  .admin-topbar,
+  .no-print {
+    display: none !important;
+  }
+  .admin-app-shell {
+    padding: 0;
+  }
+  .admin-page {
+    max-width: none;
+  }
+  #admin-order-print {
+    border: none;
+    box-shadow: none;
+  }
+}

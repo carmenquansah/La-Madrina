@@ -78,6 +78,7 @@ async function main() {
             basePriceCents: 2500,
             estimatedCostCents: DEMO_ESTIMATED_COST_CENTS_BY_NAME["Custom Cake"],
             category: "custom",
+            pricingMode: "quote",
           },
         ],
       });

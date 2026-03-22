@@ -43,6 +43,8 @@ model Product {
   basePriceCents      Int
   estimatedCostCents   Int?        // ingredient + packaging cost for margin calc
   category            String      // e.g. "bread", "pastries", "cakes", "custom"
+  /** catalog: list price applies. quote: price set per order from quote suggestion + owner override. */
+  pricingMode         String      @default("catalog")
   active              Boolean     @default(true)
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
@@ -60,7 +62,8 @@ model Order {
   preferredDate  DateTime?   // requested pickup/delivery date
   status         String      @default("pending") // pending | confirmed | completed | cancelled
   totalCents     Int
-  notes          String?
+  notes          String?    // customer-facing / shared order notes
+  internalNotes  String?    // staff-only (not shown on public receipt/checkout)
   channel        String?    // web | walk-in | phone | delivery-app | wholesale
   orderType      String?    // pickup | delivery
   createdAt      DateTime    @default(now())

@@ -13,14 +13,20 @@ export async function GET() {
     });
     return NextResponse.json({
       ok: true,
-      data: products.map((p) => ({
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        imageUrl: p.imageUrl,
-        basePriceCents: p.basePriceCents,
-        category: p.category,
-      })),
+      data: products.map((p) => {
+        const mode = p.pricingMode ?? "catalog";
+        const isQuote = mode === "quote";
+        return {
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          imageUrl: p.imageUrl,
+          /** Omitted for quote-priced items so the shop does not show a fixed list price. */
+          basePriceCents: isQuote ? null : p.basePriceCents,
+          category: p.category,
+          pricingMode: mode,
+        };
+      }),
     });
   } catch (e) {
     logRouteError("GET /api/products", e);

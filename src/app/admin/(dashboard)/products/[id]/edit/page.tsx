@@ -16,6 +16,7 @@ type Product = {
   basePriceCents: number;
   estimatedCostCents: number | null;
   category: string;
+  pricingMode?: string | null;
   active: boolean;
 };
 
@@ -54,6 +55,7 @@ export default function EditProductPage() {
   const [basePriceCents, setBasePriceCents] = useState("");
   const [estimatedCostCents, setEstimatedCostCents] = useState("");
   const [category, setCategory] = useState("bread");
+  const [pricingMode, setPricingMode] = useState<"catalog" | "quote">("catalog");
   const [active, setActive] = useState(true);
   const [imageUrl, setImageUrl] = useState("");
   const [error, setError] = useState("");
@@ -148,6 +150,7 @@ export default function EditProductPage() {
         setBasePriceCents((p.basePriceCents / 100).toFixed(2));
         setEstimatedCostCents(p.estimatedCostCents != null ? (p.estimatedCostCents / 100).toFixed(2) : "");
         setCategory(p.category);
+        setPricingMode(p.pricingMode === "quote" ? "quote" : "catalog");
         setActive(p.active);
         setImageUrl(p.imageUrl ?? "");
       })
@@ -183,6 +186,7 @@ export default function EditProductPage() {
           basePriceCents: cents,
           estimatedCostCents: costCents,
           category,
+          pricingMode,
           active,
         }),
       });
@@ -330,7 +334,22 @@ export default function EditProductPage() {
           </p>
         </div>
         <div>
-          <label htmlFor="price" style={labelStyle}>Price (GHS)</label>
+          <label htmlFor="pricingMode" style={labelStyle}>Pricing</label>
+          <select
+            id="pricingMode"
+            value={pricingMode}
+            onChange={(e) => setPricingMode(e.target.value as "catalog" | "quote")}
+            style={{ ...inputStyle, width: "100%" }}
+          >
+            <option value="catalog">Standard — use list price on orders (optional override)</option>
+            <option value="quote">Quote-based — price from cost suggestion + range; you set final price on each order</option>
+          </select>
+          <p style={{ fontSize: "0.85rem", color: "var(--muted)", marginTop: "0.35rem" }}>
+            Use <strong>Quote-based</strong> for custom work. List price can still act as a guide in the shop.
+          </p>
+        </div>
+        <div>
+          <label htmlFor="price" style={labelStyle}>List price (GHS)</label>
           <input id="price" type="number" step="0.01" min="0" value={basePriceCents} onChange={(e) => setBasePriceCents(e.target.value)} required style={{ ...inputStyle, width: "100%" }} />
         </div>
         <div>

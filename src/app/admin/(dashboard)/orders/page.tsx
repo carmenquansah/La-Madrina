@@ -16,6 +16,7 @@ type Order = {
   id: string;
   customerName: string;
   customerEmail: string;
+  customerPhone: string | null;
   preferredDate: string | null;
   status: string;
   totalCents: number;
@@ -36,12 +37,20 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [channelFilter, setChannelFilter] = useState("");
   const [orderTypeFilter, setOrderTypeFilter] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (statusFilter) params.set("status", statusFilter);
     if (channelFilter) params.set("channel", channelFilter);
     if (orderTypeFilter) params.set("orderType", orderTypeFilter);
+    if (debouncedSearch) params.set("q", debouncedSearch);
     const q = params.toString();
     const url = q ? `/api/admin/orders?${q}` : "/api/admin/orders";
     adminFetch(url)
@@ -52,7 +61,7 @@ export default function AdminOrdersPage() {
       .then((data) => setOrders(Array.isArray(data.data) ? data.data : []))
       .catch(() => setError("Failed to load orders"))
       .finally(() => setLoading(false));
-  }, [statusFilter, channelFilter, orderTypeFilter]);
+  }, [statusFilter, channelFilter, orderTypeFilter, debouncedSearch]);
 
   function formatDate(s: string) {
     return new Date(s).toLocaleDateString(undefined, { dateStyle: "short" });
@@ -61,13 +70,35 @@ export default function AdminOrdersPage() {
   if (loading) return <main className="admin-page"><p>Loading…</p></main>;
   if (error) return <main className="admin-page"><p style={{ color: "#b91c1c" }}>{error}</p></main>;
 
-  const hasFilters = !!(statusFilter || channelFilter || orderTypeFilter);
+  const hasFilters = !!(statusFilter || channelFilter || orderTypeFilter || debouncedSearch);
   const emptyList = orders.length === 0;
 
   return (
     <main className="admin-page">
-      <h1>Orders</h1>
-      <p className="page-desc">Filter by status and open an order to update status, channel, or type.</p>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "0.5rem" }}>
+        <h1 style={{ margin: 0 }}>Orders</h1>
+        <Link href="/admin/orders/new" className="admin-btn">
+          + New order
+        </Link>
+      </div>
+      <p className="page-desc">Search by customer name, email, or phone. Filter by status, channel, or type.</p>
+      <div style={{ marginBottom: "1rem" }}>
+        <label style={{ display: "block", fontSize: "0.9rem", marginBottom: "0.35rem" }}>Search</label>
+        <input
+          type="search"
+          placeholder="Name, email, phone…"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          style={{
+            width: "100%",
+            maxWidth: "420px",
+            padding: "0.5rem 0.75rem",
+            border: "1px solid var(--border-strong)",
+            borderRadius: "var(--radius-sm)",
+            fontSize: "0.95rem",
+          }}
+        />
+      </div>
       <div style={{ marginBottom: "1rem", display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
         <label>
           Status:
@@ -126,6 +157,7 @@ export default function AdminOrdersPage() {
             <tr>
               <th>Date</th>
               <th>Customer</th>
+              <th>Phone</th>
               <th>Preferred date</th>
               <th>Total</th>
               <th>Channel</th>
@@ -139,6 +171,7 @@ export default function AdminOrdersPage() {
               <tr key={o.id}>
                 <td>{formatDate(o.createdAt)}</td>
                 <td>{o.customerName}</td>
+                <td>{o.customerPhone ?? "—"}</td>
                 <td>{o.preferredDate ? formatDate(o.preferredDate) : "—"}</td>
                 <td>{formatGhs(o.totalCents)}</td>
                 <td>{o.channel ?? "—"}</td>

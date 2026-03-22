@@ -9,6 +9,8 @@ const updateSchema = z.object({
   status: z.enum(["pending", "confirmed", "completed", "cancelled"]).optional(),
   channel: z.enum(["web", "walk-in", "phone", "delivery-app", "wholesale"]).optional().nullable(),
   orderType: z.enum(["pickup", "delivery"]).optional().nullable(),
+  notes: z.string().max(8000).optional().nullable(),
+  internalNotes: z.string().max(8000).optional().nullable(),
 });
 
 export async function GET(
@@ -43,10 +45,20 @@ export async function PATCH(
   if (!parsed.success) {
     return NextResponse.json({ ok: false, message: "Invalid input" }, { status: 400 });
   }
-  const data: { status?: string; channel?: string | null; orderType?: string | null } = {};
-  if (parsed.data.status != null) data.status = parsed.data.status;
+  const data: {
+    status?: string;
+    channel?: string | null;
+    orderType?: string | null;
+    notes?: string | null;
+    internalNotes?: string | null;
+  } = {};
+  if (parsed.data.status !== undefined) data.status = parsed.data.status;
   if (parsed.data.channel !== undefined) data.channel = parsed.data.channel;
   if (parsed.data.orderType !== undefined) data.orderType = parsed.data.orderType;
+  if (parsed.data.notes !== undefined) data.notes = parsed.data.notes?.trim() ? parsed.data.notes.trim() : null;
+  if (parsed.data.internalNotes !== undefined) {
+    data.internalNotes = parsed.data.internalNotes?.trim() ? parsed.data.internalNotes.trim() : null;
+  }
 
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ ok: false, message: "No fields to update" }, { status: 400 });
@@ -54,7 +66,7 @@ export async function PATCH(
 
   const before = await prisma.order.findUnique({
     where: { id },
-    select: { status: true, channel: true, orderType: true },
+    select: { status: true, channel: true, orderType: true, notes: true, internalNotes: true },
   });
   if (!before) {
     return NextResponse.json({ ok: false, message: "Not found" }, { status: 404 });
@@ -72,6 +84,12 @@ export async function PATCH(
     }
     if (data.orderType !== undefined && data.orderType !== prior.orderType) {
       changes.orderType = { from: prior.orderType, to: data.orderType };
+    }
+    if (data.notes !== undefined && data.notes !== prior.notes) {
+      changes.notes = { from: prior.notes, to: data.notes };
+    }
+    if (data.internalNotes !== undefined && data.internalNotes !== prior.internalNotes) {
+      changes.internalNotes = { from: prior.internalNotes, to: data.internalNotes };
     }
     return Object.keys(changes).length > 0 ? { changes } : { note: "no_op" };
   }
@@ -92,7 +110,13 @@ export async function PATCH(
     return NextResponse.json({ ok: true, data: order });
   } catch (e) {
     if (!isPrismaReplicaSetError(e)) throw e;
-    const { matched } = await patchOrderNative(id, data);
+    const { matched } = await patchOrderNative(id, {
+      status: data.status,
+      channel: data.channel,
+      orderType: data.orderType,
+      notes: data.notes,
+      internalNotes: data.internalNotes,
+    });
     if (!matched) {
       return NextResponse.json({ ok: false, message: "Not found" }, { status: 404 });
     }

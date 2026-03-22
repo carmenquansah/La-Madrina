@@ -59,7 +59,7 @@ Demand and revenue are derived from `orders` + `order_items`; no separate “dem
 ## 5. Admin Features & Insights
 
 - **Auth**: Login with email/password; session in HTTP-only cookie; all `/api/admin/*` and insights protected.
-- **CRUD**: Products, view/cancel/update orders, record expenses.
+- **CRUD**: Products, **create orders (admin)** for walk-in/phone/channel, view/update orders (status, channel, type, notes), record expenses.
 - **Insights** (read-only, from DB aggregations):
   - **Revenue**: By day/week/month; by product.
   - **Expenses**: By category and time period.

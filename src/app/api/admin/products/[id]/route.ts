@@ -11,6 +11,7 @@ const updateSchema = z.object({
   basePriceCents: z.number().int().min(0).optional(),
   estimatedCostCents: z.number().int().min(0).optional().nullable(),
   category: z.string().min(1).optional(),
+  pricingMode: z.enum(["catalog", "quote"]).optional(),
   active: z.boolean().optional(),
 });
 

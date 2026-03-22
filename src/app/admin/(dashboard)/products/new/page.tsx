@@ -14,6 +14,7 @@ export default function NewProductPage() {
   const [basePriceCents, setBasePriceCents] = useState("");
   const [estimatedCostCents, setEstimatedCostCents] = useState("");
   const [category, setCategory] = useState("bread");
+  const [pricingMode, setPricingMode] = useState<"catalog" | "quote">("catalog");
   const [imageUrl, setImageUrl] = useState("");
   const [active, setActive] = useState(true);
   const [error, setError] = useState("");
@@ -44,6 +45,7 @@ export default function NewProductPage() {
           basePriceCents: cents,
           estimatedCostCents: estimatedCostCents ? Math.round(parseFloat(estimatedCostCents) * 100) : null,
           category,
+          pricingMode,
           active,
         }),
       });
@@ -92,7 +94,19 @@ export default function NewProductPage() {
           />
         </div>
         <div>
-          <label htmlFor="price" style={labelStyle}>Price (GHS)</label>
+          <label htmlFor="pricingMode" style={labelStyle}>Pricing</label>
+          <select
+            id="pricingMode"
+            value={pricingMode}
+            onChange={(e) => setPricingMode(e.target.value as "catalog" | "quote")}
+            style={{ ...inputStyle, width: "100%" }}
+          >
+            <option value="catalog">Standard — fixed list price</option>
+            <option value="quote">Quote-based — price each order from suggestions</option>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="price" style={labelStyle}>List price (GHS)</label>
           <input id="price" type="number" step="0.01" min="0" value={basePriceCents} onChange={(e) => setBasePriceCents(e.target.value)} required style={{ ...inputStyle, width: "100%" }} />
         </div>
         <div>

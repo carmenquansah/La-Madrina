@@ -26,6 +26,9 @@ export default async function DashboardLayout({
             <Link href="/admin">Dashboard</Link>
             <Link href="/admin/products">Products</Link>
             <Link href="/admin/orders">Orders</Link>
+            <Link href="/admin/orders/new" title="Record walk-in or phone order">
+              New order
+            </Link>
             <Link href="/admin/expenses">Expenses</Link>
             <Link href="/admin/ingredients">Ingredients</Link>
             <Link href="/admin/insights">Insights</Link>

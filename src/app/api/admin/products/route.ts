@@ -11,6 +11,8 @@ const createSchema = z.object({
   basePriceCents: z.number().int().min(0),
   estimatedCostCents: z.number().int().min(0).optional().nullable(),
   category: z.string().min(1),
+  /** catalog: fixed list price. quote: price set per order from suggestion + owner. */
+  pricingMode: z.enum(["catalog", "quote"]).optional().default("catalog"),
   active: z.boolean().optional().default(true),
 });
 

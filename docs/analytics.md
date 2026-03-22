@@ -22,6 +22,10 @@
 - **Do not** email CSVs unencrypted; store them securely; restrict who can access admin export.
 - **Do not** log full export bodies, full order payloads, or customer contact fields in application logs.
 
+## Quote estimate (public)
+
+`POST /api/shop/quote-estimate` with `{ productId, description }` (description ≥ 12 chars) returns a **suggested unit price band** for **quote-priced** products only, after the customer describes what they want. Same cost logic as admin (recipe / estimated cost). Rate-limited per IP. Treat as indicative — final price is confirmed with the bakery.
+
 ## Shop funnel events (public)
 
 `POST /api/shop/analytics` with JSON body:
