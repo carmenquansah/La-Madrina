@@ -56,62 +56,86 @@ export async function seedBaseNative(passwordHash: string): Promise<void> {
       const now = new Date();
       await productCol.insertMany([
         {
-          name: "Pan de Campo",
-          description: "Rustic country loaf",
+          name: "Custom Celebration Cake",
+          description: "Tell us your vision — size, flavor, finish, and occasion. We'll send you a price range, then the owner confirms the final quote before accepting.",
           imageUrl:
-            "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=800&q=80&auto=format&fit=crop",
-          basePriceCents: 650,
-          estimatedCostCents: DEMO_ESTIMATED_COST_CENTS_BY_NAME["Pan de Campo"],
-          category: "bread",
-          active: true,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          name: "Croissant",
-          description: "Buttery classic",
-          imageUrl:
-            "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=800&q=80&auto=format&fit=crop",
-          basePriceCents: 350,
-          estimatedCostCents: DEMO_ESTIMATED_COST_CENTS_BY_NAME["Croissant"],
-          category: "pastries",
-          active: true,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          name: "Tarta de Santiago",
-          description: "Almond cake",
-          imageUrl:
-            "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&q=80&auto=format&fit=crop",
-          basePriceCents: 1200,
-          estimatedCostCents: DEMO_ESTIMATED_COST_CENTS_BY_NAME["Tarta de Santiago"],
-          category: "cakes",
-          active: true,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          name: "Ensaimada",
-          description: "Mallorcan pastry",
-          imageUrl:
-            "https://images.unsplash.com/photo-1612203985729-70726954388c?w=800&q=80&auto=format&fit=crop",
-          basePriceCents: 400,
-          estimatedCostCents: DEMO_ESTIMATED_COST_CENTS_BY_NAME["Ensaimada"],
-          category: "pastries",
-          active: true,
-          createdAt: now,
-          updatedAt: now,
-        },
-        {
-          name: "Custom Cake",
-          description: "Custom order — specify in notes",
-          imageUrl:
-            "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=800&q=80&auto=format&fit=crop",
-          basePriceCents: 2500,
-          estimatedCostCents: DEMO_ESTIMATED_COST_CENTS_BY_NAME["Custom Cake"],
+            "https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=800&q=80&auto=format&fit=crop",
+          basePriceCents: 0,
+          estimatedCostCents: DEMO_ESTIMATED_COST_CENTS_BY_NAME["Custom Celebration Cake"],
           category: "custom",
           pricingMode: "quote",
+          active: true,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          name: "Classic Cupcake",
+          description: "Light vanilla sponge topped with buttercream frosting. Available in a variety of colors and flavors.",
+          imageUrl:
+            "https://images.unsplash.com/photo-1563729784474-d77dbb933176?w=800&q=80&auto=format&fit=crop",
+          basePriceCents: 350,
+          estimatedCostCents: DEMO_ESTIMATED_COST_CENTS_BY_NAME["Classic Cupcake"],
+          category: "cupcakes",
+          active: true,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          name: "Cupcake Box (6)",
+          description: "A half-dozen cupcakes, assorted or matching — perfect for gifts, events, and celebrations.",
+          imageUrl:
+            "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80&auto=format&fit=crop",
+          basePriceCents: 1800,
+          estimatedCostCents: DEMO_ESTIMATED_COST_CENTS_BY_NAME["Cupcake Box (6)"],
+          category: "cupcakes",
+          active: true,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          name: "Ghana Pie",
+          description: "Flaky shortcrust pastry filled with seasoned beef mince, onions, and scotch bonnet — a La Madrina staple.",
+          imageUrl:
+            "https://images.unsplash.com/photo-1604467852206-d9f7e2daf23e?w=800&q=80&auto=format&fit=crop",
+          basePriceCents: 450,
+          estimatedCostCents: DEMO_ESTIMATED_COST_CENTS_BY_NAME["Ghana Pie"],
+          category: "finger-foods",
+          active: true,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          name: "Samosa",
+          description: "Crispy pastry parcels packed with spiced beef and vegetables. Served fresh.",
+          imageUrl:
+            "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&q=80&auto=format&fit=crop",
+          basePriceCents: 350,
+          estimatedCostCents: DEMO_ESTIMATED_COST_CENTS_BY_NAME["Samosa"],
+          category: "finger-foods",
+          active: true,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          name: "Sausage Roll",
+          description: "Buttery puff pastry rolled around seasoned pork sausage. Golden-baked to order.",
+          imageUrl:
+            "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=800&q=80&auto=format&fit=crop",
+          basePriceCents: 400,
+          estimatedCostCents: DEMO_ESTIMATED_COST_CENTS_BY_NAME["Sausage Roll"],
+          category: "finger-foods",
+          active: true,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          name: "Peppery Gizzards",
+          description: "Tender chicken gizzards slow-cooked in a rich peppered sauce. A crowd-favourite at every gathering.",
+          imageUrl:
+            "https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=800&q=80&auto=format&fit=crop",
+          basePriceCents: 850,
+          estimatedCostCents: DEMO_ESTIMATED_COST_CENTS_BY_NAME["Peppery Gizzards"],
+          category: "finger-foods",
           active: true,
           createdAt: now,
           updatedAt: now,
@@ -159,7 +183,7 @@ export async function seedTestDataNative(products: ProductForDemo[]): Promise<vo
     return;
   }
 
-  const required = ["Pan de Campo", "Croissant", "Tarta de Santiago", "Ensaimada", "Custom Cake"];
+  const required = ["Custom Celebration Cake", "Classic Cupcake", "Cupcake Box (6)", "Ghana Pie", "Samosa", "Sausage Roll", "Peppery Gizzards"];
   const nameSet = new Set(products.map((p) => p.name));
   for (const n of required) {
     if (!nameSet.has(n)) {

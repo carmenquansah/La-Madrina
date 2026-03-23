@@ -20,7 +20,14 @@ export default async function DashboardLayout({
       <header className="admin-topbar">
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.75rem 1.25rem" }}>
           <Link href="/admin" className="admin-brand">
-            La Madrina
+            <span className="brand-wordmark-wrap">
+              <img
+                src="/images/logo/la%20madrina%20logo%20black.png"
+                alt="La Madrina"
+                className="brand-wordmark brand-wordmark-admin"
+                height={36}
+              />
+            </span>
           </Link>
           <nav className="admin-nav" aria-label="Admin">
             <Link href="/admin">Dashboard</Link>
@@ -33,6 +40,9 @@ export default async function DashboardLayout({
             <Link href="/admin/ingredients">Ingredients</Link>
             <Link href="/admin/insights">Insights</Link>
             <Link href="/admin/audit">Audit</Link>
+            <span className="admin-nav-sep" aria-hidden="true" />
+            <Link href="/" className="admin-nav-ext">Home ↗</Link>
+            <Link href="/shop" className="admin-nav-ext">Shop ↗</Link>
           </nav>
         </div>
         <span className="admin-user">

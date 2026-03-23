@@ -6,7 +6,14 @@ export function PublicFooter() {
     <footer className="public-footer">
       <div className="public-footer-inner">
         <div className="public-footer-brand">
-          <span className="public-footer-name">La Madrina</span>
+          <span className="brand-wordmark-wrap">
+            <img
+              src="/images/logo/la%20madrina%20logo%20black.png"
+              alt="La Madrina"
+              className="brand-wordmark brand-wordmark-footer"
+              height={34}
+            />
+          </span>
           <span className="public-footer-tagline">Artisan bread &amp; pastries</span>
         </div>
         <div className="public-footer-links">

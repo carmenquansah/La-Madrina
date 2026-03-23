@@ -1,17 +1,18 @@
 /**
  * Demo estimated costs for Insights → Pricing (manual source) and margin math.
- * Ensaimada: high cost vs price → low margin + below suggested min price.
- * Croissant: cost → ~15% margin (under 20% alert).
+ * Costs are plausible estimates — update via Admin → Products once live data is available.
  */
 import type { PrismaClient } from "@prisma/client";
 import type { Db } from "mongodb";
 
 export const DEMO_ESTIMATED_COST_CENTS_BY_NAME: Record<string, number> = {
-  "Pan de Campo": 320,
-  "Croissant": 295,
-  "Tarta de Santiago": 540,
-  "Ensaimada": 345,
-  "Custom Cake": 1400,
+  "Custom Celebration Cake": 1400,
+  "Classic Cupcake":          140,
+  "Cupcake Box (6)":          820,
+  "Ghana Pie":                190,
+  "Samosa":                   130,
+  "Sausage Roll":             160,
+  "Peppery Gizzards":         380,
 };
 
 export async function applyDemoProductCostsPrisma(prisma: PrismaClient): Promise<void> {
