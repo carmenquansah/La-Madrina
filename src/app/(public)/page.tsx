@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "La Madrina Bakery — Cakes, Pies & More · Tema, Ghana",
+};
 
 const TAPE = ["Cupcakes", "Ghana Pies", "Samosas", "Sausage Rolls", "Peppery Gizzards", "Celebration Cakes"];
 
@@ -113,7 +118,26 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ── 6. CLOSING VAULT ── */}
+      {/* ── 6. INSTAGRAM FEED (Behold widget) ── */}
+      <section className="oj-shell oj-behold-section">
+        <p className="oj-label">Follow us on Instagram</p>
+        <p className="oj-behold-handle">
+          <a href="https://www.instagram.com/la.madrina____bakery" target="_blank" rel="noopener noreferrer">
+            @la.madrina____bakery ↗
+          </a>
+        </p>
+        {/* Replace the placeholder below with your Behold embed code once you have it */}
+        <div id="behold-widget-placeholder" className="oj-behold-placeholder">
+          <p>Instagram feed coming soon — set up Behold at behold.so to activate.</p>
+        </div>
+        {/*
+          Once you have your Behold feed ID, replace the placeholder above with:
+          <div id="YOUR_BEHOLD_FEED_ID"></div>
+          <script src="https://w.behold.so/widget.js" type="module" async></script>
+        */}
+      </section>
+
+      {/* ── 7. CLOSING VAULT ── */}
       <section className="oj-close">
         {/* arch wave transition from cream into dark */}
         <span className="oj-arch-top" aria-hidden="true">

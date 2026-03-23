@@ -24,6 +24,8 @@ export async function PublicHeader() {
         <nav className="public-nav" aria-label="Main">
           <Link href="/">Home</Link>
           <Link href="/shop">Shop</Link>
+          <Link href="/about">About</Link>
+          <Link href="/track">Track order</Link>
           {session && (
             <Link href="/admin" className="public-nav-admin">
               Admin ↗

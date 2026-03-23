@@ -18,7 +18,8 @@ export default async function DashboardLayout({
   return (
     <div className="admin-app-shell">
       <header className="admin-topbar">
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.75rem 1.25rem" }}>
+        <span className="admin-topbar-stripe" aria-hidden="true" />
+        <div className="admin-topbar-inner">
           <Link href="/admin" className="admin-brand">
             <span className="brand-wordmark-wrap">
               <img
@@ -40,12 +41,13 @@ export default async function DashboardLayout({
             <Link href="/admin/ingredients">Ingredients</Link>
             <Link href="/admin/insights">Insights</Link>
             <Link href="/admin/audit">Audit</Link>
+            <Link href="/admin/settings">Settings</Link>
             <span className="admin-nav-sep" aria-hidden="true" />
             <Link href="/" className="admin-nav-ext">Home ↗</Link>
             <Link href="/shop" className="admin-nav-ext">Shop ↗</Link>
           </nav>
         </div>
-        <span className="admin-user">
+        <span className="admin-user admin-topbar-user">
           {session.email}
           {" · "}
           <AdminLogoutButton />

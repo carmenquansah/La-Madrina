@@ -39,6 +39,7 @@ export default function AdminOrdersPage() {
   const [orderTypeFilter, setOrderTypeFilter] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400);
@@ -62,6 +63,22 @@ export default function AdminOrdersPage() {
       .catch(() => setError("Failed to load orders"))
       .finally(() => setLoading(false));
   }, [statusFilter, channelFilter, orderTypeFilter, debouncedSearch]);
+
+  async function confirmPayment(orderId: string) {
+    setConfirmingId(orderId);
+    try {
+      const res = await adminFetch(`/api/admin/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "confirmed" }),
+      });
+      if (res.ok) {
+        setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: "confirmed" } : o)));
+      }
+    } finally {
+      setConfirmingId(null);
+    }
+  }
 
   function formatDate(s: string) {
     return new Date(s).toLocaleDateString(undefined, { dateStyle: "short" });
@@ -177,7 +194,22 @@ export default function AdminOrdersPage() {
                 <td>{o.channel ?? "—"}</td>
                 <td style={{ textTransform: "capitalize" }}>{o.orderType ?? "—"}</td>
                 <td><span className={`admin-badge ${o.status === "completed" ? "ok" : o.status === "cancelled" ? "low" : "medium"}`}>{o.status}</span></td>
-                <td><Link href={`/admin/orders/${o.id}`}>View</Link></td>
+                <td>
+                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                    {o.status === "pending" && o.channel === "web" && (
+                      <button
+                        type="button"
+                        className="admin-btn admin-btn-sm admin-btn-confirm"
+                        disabled={confirmingId === o.id}
+                        onClick={() => confirmPayment(o.id)}
+                        title="Mark payment received and confirm order"
+                      >
+                        {confirmingId === o.id ? "…" : "✓ Payment received"}
+                      </button>
+                    )}
+                    <Link href={`/admin/orders/${o.id}`}>View</Link>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>

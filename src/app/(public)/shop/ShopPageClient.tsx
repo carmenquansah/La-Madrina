@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { formatGhs } from "@/lib/format-money";
 import { pinHeightVariant, resolveShopProductImage } from "@/lib/shop-product-image";
 
@@ -29,6 +30,22 @@ type QuoteEstimateData = {
   targetMarginPct: number;
 };
 
+type PaymentInfo = {
+  network: string;
+  momoNumber: string;
+  momoName: string;
+  whatsapp: string;
+};
+
+type ConfirmedOrder = {
+  orderId: string;
+  orderRef: string;
+  totalCents: number;
+  paymentInfo: PaymentInfo;
+};
+
+type CheckoutStep = "cart" | "details" | "confirmed";
+
 function isQuoteProduct(p: Product): boolean {
   return p.pricingMode === "quote";
 }
@@ -41,19 +58,35 @@ function track(eventType: string, productId?: string) {
   });
 }
 
+const ALL = "All";
+
 export function ShopPageClient() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loadError, setLoadError] = useState("");
   const [cart, setCart] = useState<Record<string, CartLine>>({});
+  const [cartOpen, setCartOpen] = useState(false);
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
   const [imgBroken, setImgBroken] = useState<Record<string, boolean>>({});
   const [mounted, setMounted] = useState(false);
+  const [activeCategory, setActiveCategory] = useState(ALL);
   const viewedProducts = useRef(new Set<string>());
 
   const [specText, setSpecText] = useState("");
   const [quoteEstimate, setQuoteEstimate] = useState<QuoteEstimateData | null>(null);
   const [estimateLoading, setEstimateLoading] = useState(false);
   const [estimateError, setEstimateError] = useState("");
+
+  // Checkout flow
+  const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>("cart");
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [preferredDate, setPreferredDate] = useState("");
+  const [orderType, setOrderType] = useState<"pickup" | "delivery">("pickup");
+  const [orderNotes, setOrderNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [confirmedOrder, setConfirmedOrder] = useState<ConfirmedOrder | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -78,12 +111,12 @@ export function ShopPageClient() {
   }, []);
 
   useEffect(() => {
-    if (!detailProduct) return;
-    document.body.style.overflow = "hidden";
+    const locked = !!detailProduct || cartOpen;
+    document.body.style.overflow = locked ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [detailProduct]);
+  }, [detailProduct, cartOpen]);
 
   useEffect(() => {
     if (!detailProduct || !isQuoteProduct(detailProduct)) {
@@ -106,6 +139,44 @@ export function ShopPageClient() {
     () => Object.entries(cart).reduce((sum, [, line]) => sum + line.quantity * line.unitPriceCents, 0),
     [cart]
   );
+
+  const categories = useMemo(() => {
+    const cats = Array.from(new Set(products.map((p) => p.category)));
+    return [ALL, ...cats];
+  }, [products]);
+
+  const visibleProducts = useMemo(
+    () => (activeCategory === ALL ? products : products.filter((p) => p.category === activeCategory)),
+    [products, activeCategory]
+  );
+
+  const cartLines = useMemo(
+    () =>
+      Object.entries(cart)
+        .map(([id, line]) => ({ product: products.find((p) => p.id === id), line }))
+        .filter((x): x is { product: Product; line: CartLine } => !!x.product),
+    [cart, products]
+  );
+
+  function updateQuantity(productId: string, delta: number) {
+    setCart((c) => {
+      const ex = c[productId];
+      if (!ex) return c;
+      const nextQty = ex.quantity + delta;
+      if (nextQty <= 0) {
+        const { [productId]: _removed, ...rest } = c;
+        return rest;
+      }
+      return { ...c, [productId]: { ...ex, quantity: nextQty } };
+    });
+  }
+
+  function removeFromCart(productId: string) {
+    setCart((c) => {
+      const { [productId]: _removed, ...rest } = c;
+      return rest;
+    });
+  }
 
   function openDetail(p: Product) {
     if (!viewedProducts.current.has(p.id)) {
@@ -184,7 +255,58 @@ export function ShopPageClient() {
 
   function beginCheckout() {
     track("begin_checkout");
-    window.alert("Checkout is coming soon — thanks for trying the demo!");
+    setCheckoutStep("details");
+    setSubmitError("");
+  }
+
+  function closeCart() {
+    setCartOpen(false);
+    // Reset to cart step when drawer closes (unless confirmed)
+    if (checkoutStep !== "confirmed") setCheckoutStep("cart");
+  }
+
+  async function submitOrder(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      const res = await fetch("/api/shop/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName: customerName.trim(),
+          customerEmail: customerEmail.trim(),
+          customerPhone: customerPhone.trim(),
+          preferredDate: preferredDate || null,
+          orderType,
+          notes: orderNotes.trim() || null,
+          items: cartLines.map(({ product, line }) => ({
+            productId: product.id,
+            quantity: line.quantity,
+            unitPriceCents: line.unitPriceCents,
+            specifications: line.specifications ?? null,
+          })),
+        }),
+      });
+      const j = await res.json();
+      if (!j.ok) {
+        setSubmitError(j.message ?? "Something went wrong. Please try again.");
+        return;
+      }
+      setConfirmedOrder({
+        orderId: j.data.orderId,
+        orderRef: j.data.orderRef,
+        totalCents: cartTotalCents,
+        paymentInfo: j.data.paymentInfo,
+      });
+      setCart({});
+      setCheckoutStep("confirmed");
+      track("begin_checkout");
+    } catch {
+      setSubmitError("Could not place order. Check your connection and try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const modalImageSrc =
@@ -337,34 +459,283 @@ export function ShopPageClient() {
       document.body
     );
 
+  const cartDrawerNode =
+    mounted &&
+    createPortal(
+      <>
+        <div
+          className={`cart-backdrop${cartOpen ? " cart-backdrop-visible" : ""}`}
+          aria-hidden="true"
+          onClick={closeCart}
+        />
+        <aside
+          className={`cart-drawer${cartOpen ? " cart-drawer-open" : ""}`}
+          aria-label="Shopping cart"
+          aria-hidden={!cartOpen}
+        >
+          {/* ── Header ── */}
+          <div className="cart-drawer-header">
+            <div className="cart-drawer-heading-row">
+              {checkoutStep === "details" && (
+                <button
+                  type="button"
+                  className="cart-back-btn"
+                  onClick={() => setCheckoutStep("cart")}
+                  aria-label="Back to cart"
+                >
+                  ←
+                </button>
+              )}
+              <h2 className="cart-drawer-title">
+                {checkoutStep === "cart" && "Your Cart"}
+                {checkoutStep === "details" && "Your Details"}
+                {checkoutStep === "confirmed" && "Order Placed!"}
+              </h2>
+            </div>
+            <button
+              type="button"
+              className="cart-drawer-close"
+              aria-label="Close"
+              onClick={closeCart}
+            >
+              ×
+            </button>
+          </div>
+
+          {/* ── Step: Cart ── */}
+          {checkoutStep === "cart" && (
+            <>
+              <div className="cart-drawer-body">
+                {cartLines.length === 0 ? (
+                  <div className="cart-empty">
+                    <p className="cart-empty-icon">🛍</p>
+                    <p className="cart-empty-text">Your cart is empty.</p>
+                    <p className="cart-empty-sub">Browse the menu and add something delicious.</p>
+                  </div>
+                ) : (
+                  <ul className="cart-item-list">
+                    {cartLines.map(({ product, line }) => (
+                      <li key={product.id} className="cart-item">
+                        <div className="cart-item-info">
+                          <p className="cart-item-name">{product.name}</p>
+                          {line.specifications && (
+                            <p className="cart-item-specs">{line.specifications}</p>
+                          )}
+                          <p className="cart-item-unit">{formatGhs(line.unitPriceCents)} each</p>
+                        </div>
+                        <div className="cart-item-right">
+                          <div className="cart-qty-row">
+                            <button type="button" className="cart-qty-btn" aria-label="Decrease" onClick={() => updateQuantity(product.id, -1)}>−</button>
+                            <span className="cart-qty-val">{line.quantity}</span>
+                            <button type="button" className="cart-qty-btn" aria-label="Increase" onClick={() => updateQuantity(product.id, 1)}>+</button>
+                          </div>
+                          <p className="cart-item-total">{formatGhs(line.quantity * line.unitPriceCents)}</p>
+                          <button type="button" className="cart-remove-btn" onClick={() => removeFromCart(product.id)}>Remove</button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              {cartLines.length > 0 && (
+                <div className="cart-drawer-footer">
+                  <div className="cart-subtotal-row">
+                    <span className="cart-subtotal-label">Subtotal</span>
+                    <span className="cart-subtotal-value">{formatGhs(cartTotalCents)}</span>
+                  </div>
+                  <p className="cart-subtotal-note">
+                    Custom cake prices are estimates — the bakery confirms the final price before accepting.
+                  </p>
+                  <button type="button" className="btn btn-primary" style={{ width: "100%" }} onClick={beginCheckout}>
+                    Proceed to checkout →
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Step: Customer details ── */}
+          {checkoutStep === "details" && (
+            <form className="checkout-form" onSubmit={submitOrder}>
+              <div className="cart-drawer-body">
+                <div className="checkout-field">
+                  <label className="checkout-label" htmlFor="co-name">Full name *</label>
+                  <input id="co-name" type="text" className="checkout-input" required value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Your name" />
+                </div>
+                <div className="checkout-field">
+                  <label className="checkout-label" htmlFor="co-phone">Phone number *</label>
+                  <input id="co-phone" type="tel" className="checkout-input" required value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g. 024 XXX XXXX" />
+                  <p className="checkout-hint">We use this to verify your MoMo payment.</p>
+                </div>
+                <div className="checkout-field">
+                  <label className="checkout-label" htmlFor="co-email">Email *</label>
+                  <input id="co-email" type="email" className="checkout-input" required value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="you@email.com" />
+                </div>
+                <div className="checkout-field">
+                  <label className="checkout-label" htmlFor="co-date">Preferred date</label>
+                  <input id="co-date" type="date" className="checkout-input" value={preferredDate} onChange={(e) => setPreferredDate(e.target.value)} min={new Date().toISOString().split("T")[0]} />
+                </div>
+                <div className="checkout-field">
+                  <p className="checkout-label">Collection *</p>
+                  <div className="checkout-radio-group">
+                    <label className="checkout-radio">
+                      <input type="radio" name="orderType" value="pickup" checked={orderType === "pickup"} onChange={() => setOrderType("pickup")} />
+                      Pickup — Mitchel Street, Tema
+                    </label>
+                    <label className="checkout-radio">
+                      <input type="radio" name="orderType" value="delivery" checked={orderType === "delivery"} onChange={() => setOrderType("delivery")} />
+                      Delivery via Yango / Uber / Bolt
+                    </label>
+                  </div>
+                  {orderType === "delivery" && (
+                    <p className="checkout-delivery-hint">
+                      Place your order here, then request a rider through Yango, Uber, or Bolt using our Mitchel Street, Tema address. Include your order reference in the app notes so we know it's you.
+                    </p>
+                  )}
+                </div>
+                <div className="checkout-field">
+                  <label className="checkout-label" htmlFor="co-notes">Notes / special requests</label>
+                  <textarea id="co-notes" className="checkout-input checkout-textarea" rows={3} value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="Allergies, occasion, any special requests…" />
+                </div>
+                {submitError && <p className="checkout-error" role="alert">{submitError}</p>}
+              </div>
+              <div className="cart-drawer-footer">
+                <div className="cart-subtotal-row">
+                  <span className="cart-subtotal-label">Total</span>
+                  <span className="cart-subtotal-value">{formatGhs(cartTotalCents)}</span>
+                </div>
+                <button type="submit" className="btn btn-primary" style={{ width: "100%" }} disabled={submitting}>
+                  {submitting ? "Placing order…" : "Place order →"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ── Step: Confirmation + payment instructions ── */}
+          {checkoutStep === "confirmed" && confirmedOrder && (
+            <div className="cart-drawer-body">
+              <div className="order-confirmed">
+                <div className="order-confirmed-icon" aria-hidden="true">✓</div>
+                <h3 className="order-confirmed-title">Order received!</h3>
+                <p className="order-confirmed-ref">Reference: <strong>{confirmedOrder.orderRef}</strong></p>
+
+                <div className="payment-instructions">
+                  <p className="payment-instructions-heading">How to pay</p>
+                  <p className="payment-instructions-amount">{formatGhs(confirmedOrder.totalCents)}</p>
+                  <div className="payment-instructions-steps">
+                    <p>Send via <strong>{confirmedOrder.paymentInfo.network} Mobile Money</strong> to:</p>
+                    <div className="payment-momo-box">
+                      <span className="payment-momo-number">{confirmedOrder.paymentInfo.momoNumber}</span>
+                      <span className="payment-momo-name">{confirmedOrder.paymentInfo.momoName}</span>
+                    </div>
+                    {confirmedOrder.paymentInfo.whatsapp && (
+                      <p className="payment-whatsapp">
+                        After sending, WhatsApp us at{" "}
+                        <a
+                          href={`https://wa.me/${confirmedOrder.paymentInfo.whatsapp.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="payment-whatsapp-link"
+                        >
+                          {confirmedOrder.paymentInfo.whatsapp}
+                        </a>{" "}
+                        with your order reference <strong>{confirmedOrder.orderRef}</strong>.
+                      </p>
+                    )}
+                    {!confirmedOrder.paymentInfo.whatsapp && (
+                      <p className="payment-confirm-note">
+                        After sending, contact us with your order reference <strong>{confirmedOrder.orderRef}</strong> so we can confirm.
+                      </p>
+                    )}
+                  </div>
+                  <p className="payment-note">
+                    Your order will be prepared once payment is verified by the bakery.
+                  </p>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem", marginTop: "1.5rem", width: "100%" }}>
+                  <Link href={`/track?email=${encodeURIComponent(customerEmail)}&ref=${confirmedOrder.orderRef}`} className="btn btn-primary" style={{ textAlign: "center" }}>
+                    Track this order →
+                  </Link>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ width: "100%" }}
+                    onClick={() => {
+                      setCartOpen(false);
+                      setCheckoutStep("cart");
+                      setConfirmedOrder(null);
+                    }}
+                  >
+                    Back to shop
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </aside>
+      </>,
+      document.body
+    );
+
   return (
     <main className="shop-shell">
-      <header className="shop-page-header">
-        <p className="site-eyebrow">Order online</p>
-        <h1 className="shop-hero-title">Menu</h1>
-        <p className="shop-lead">
-          Scroll the gallery, tap a photo for details, then add to cart — like the apps you already use. Custom items show a
-          price after you describe what you want. Checkout opens when we&apos;re ready for real orders.
-        </p>
-      </header>
-
-      <div className="shop-cart-bar">
-        <div className="shop-cart-info">
-          <span className="shop-cart-label">Cart</span>
-          <span className="shop-cart-count">
-            {cartTotalItems} item{cartTotalItems !== 1 ? "s" : ""}
-            {cartTotalItems > 0 && <span style={{ marginLeft: "0.5rem", opacity: 0.9 }}>· {formatGhs(cartTotalCents)}</span>}
-          </span>
+      {/* ── Hero ── */}
+      <section className="shop-hero">
+        <div className="shop-hero-content">
+          <p className="shop-hero-eyebrow">La Madrina · Order online</p>
+          <h1 className="shop-hero-title">The Menu</h1>
+          <p className="shop-hero-lead">
+            Tap any item for details and add it to your cart. Custom cakes show a suggested price range
+            once you describe what you need.
+          </p>
         </div>
-        <button
-          type="button"
-          onClick={beginCheckout}
-          disabled={cartTotalItems === 0}
-          className="btn btn-primary btn-sm"
-        >
-          Checkout (demo)
-        </button>
-      </div>
+        <div className="shop-hero-arc" aria-hidden="true">
+          <svg viewBox="0 0 1440 56" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,56 Q720,0 1440,56 L1440,56 L0,56 Z" fill="var(--background)" />
+          </svg>
+        </div>
+      </section>
+
+      {/* ── Category pills ── */}
+      {categories.length > 1 && (
+        <div className="shop-category-bar" role="tablist" aria-label="Filter by category">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              role="tab"
+              aria-selected={activeCategory === cat}
+              className={`shop-cat-pill${activeCategory === cat ? " shop-cat-pill-active" : ""}`}
+              onClick={() => setActiveCategory(cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Floating cart button ── */}
+      <button
+        type="button"
+        className={`cart-fab${cartTotalItems > 0 ? " cart-fab-active" : ""}`}
+        onClick={() => setCartOpen(true)}
+        aria-label={`Open cart — ${cartTotalItems} item${cartTotalItems !== 1 ? "s" : ""}`}
+      >
+        <span className="cart-fab-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+        </span>
+        {cartTotalItems > 0 && (
+          <span className="cart-fab-label">
+            <span className="cart-fab-count">{cartTotalItems}</span>
+            <span className="cart-fab-total">{formatGhs(cartTotalCents)}</span>
+          </span>
+        )}
+      </button>
 
       {loadError && (
         <p className="shop-error" role="alert">
@@ -373,7 +744,7 @@ export function ShopPageClient() {
       )}
 
       <div className="shop-masonry" role="list">
-        {products.map((p, index) => {
+        {visibleProducts.map((p, index) => {
           const src = resolveShopProductImage(p.category, p.imageUrl);
           const h = pinHeightVariant(index);
           const quote = isQuoteProduct(p);
@@ -422,11 +793,14 @@ export function ShopPageClient() {
         })}
       </div>
 
-      {products.length === 0 && !loadError && (
-        <p className="shop-empty">No products listed yet — check back soon.</p>
+      {visibleProducts.length === 0 && !loadError && (
+        <p className="shop-empty">
+          {products.length === 0 ? "No products listed yet — check back soon." : `Nothing in "${activeCategory}" yet.`}
+        </p>
       )}
 
       {modalNode}
+      {cartDrawerNode}
     </main>
   );
 }

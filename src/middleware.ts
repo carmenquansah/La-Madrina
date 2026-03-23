@@ -18,7 +18,12 @@ export async function middleware(request: NextRequest) {
   if (!session) {
     const login = new URL("/admin/login", request.url);
     login.searchParams.set("from", pathname);
-    return NextResponse.redirect(login);
+    const res = NextResponse.redirect(login);
+    // Clear any stale / invalid cookie so the browser doesn't keep sending it
+    if (raw) {
+      res.cookies.set(COOKIE_NAME, "", { path: "/", maxAge: 0, httpOnly: true, sameSite: "lax" });
+    }
+    return res;
   }
 
   return NextResponse.next();
