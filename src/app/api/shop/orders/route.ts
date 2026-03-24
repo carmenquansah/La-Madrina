@@ -80,40 +80,38 @@ export async function POST(request: NextRequest) {
     const orderRef = `LM-${result.orderId.slice(-8).toUpperCase()}`;
     const payment = getPaymentInfo();
 
-    // Fire emails in the background — don't block the response
-    (async () => {
-      try {
-        const productIds = parsed.data.items.map((i) => i.productId);
-        const products = await prisma.product.findMany({
-          where: { id: { in: productIds } },
-          select: { id: true, name: true },
-        });
-        const nameById = new Map(products.map((p) => [p.id, p.name]));
-        await sendOrderEmails({
-          orderRef,
-          customerName: parsed.data.customerName,
-          customerEmail: parsed.data.customerEmail,
-          customerPhone: parsed.data.customerPhone,
-          orderType: parsed.data.orderType,
-          preferredDate: parsed.data.preferredDate,
-          notes: parsed.data.notes,
-          totalCents: parsed.data.items.reduce(
-            (s, i) => s + i.quantity * i.unitPriceCents,
-            0
-          ),
-          items: parsed.data.items.map((i) => ({
-            name: nameById.get(i.productId) ?? i.productId,
-            quantity: i.quantity,
-            unitPriceCents: i.unitPriceCents,
-          })),
-          momoNumber: payment.momoNumber,
-          momoName: payment.momoName,
-          momoNetwork: payment.network,
-        });
-      } catch (emailErr) {
-        logRouteError("sendOrderEmails", emailErr);
-      }
-    })();
+    // Send emails before returning — background tasks are killed on Vercel serverless
+    try {
+      const productIds = parsed.data.items.map((i) => i.productId);
+      const products = await prisma.product.findMany({
+        where: { id: { in: productIds } },
+        select: { id: true, name: true },
+      });
+      const nameById = new Map(products.map((p) => [p.id, p.name]));
+      await sendOrderEmails({
+        orderRef,
+        customerName: parsed.data.customerName,
+        customerEmail: parsed.data.customerEmail,
+        customerPhone: parsed.data.customerPhone,
+        orderType: parsed.data.orderType,
+        preferredDate: parsed.data.preferredDate,
+        notes: parsed.data.notes,
+        totalCents: parsed.data.items.reduce(
+          (s, i) => s + i.quantity * i.unitPriceCents,
+          0
+        ),
+        items: parsed.data.items.map((i) => ({
+          name: nameById.get(i.productId) ?? i.productId,
+          quantity: i.quantity,
+          unitPriceCents: i.unitPriceCents,
+        })),
+        momoNumber: payment.momoNumber,
+        momoName: payment.momoName,
+        momoNetwork: payment.network,
+      });
+    } catch (emailErr) {
+      logRouteError("sendOrderEmails", emailErr);
+    }
 
     return NextResponse.json({
       ok: true,
