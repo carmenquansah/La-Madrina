@@ -109,7 +109,7 @@ function buildOwnerHtml(d: OrderEmailData): string {
   <p style="border-top:1px solid #eee;padding-top:12px">${itemList}</p>
   <p style="font-size:18px;font-weight:bold;color:#190d14">Total: ${formatGhs(d.totalCents)}</p>
   <p>Log in to confirm payment once you receive it:<br>
-  <a href="http://localhost:3000/admin/orders">Admin → Orders</a></p>
+  <a href="${process.env.APP_URL ?? "http://localhost:3000"}/admin/orders">Admin → Orders</a></p>
 </body>
 </html>`;
 }

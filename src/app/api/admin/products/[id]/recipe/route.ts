@@ -118,6 +118,38 @@ export async function GET(
   });
 }
 
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
+
+  const { id: productId } = await params;
+  const recipe = await prisma.productRecipe.findUnique({ where: { productId } });
+  if (!recipe) {
+    return NextResponse.json({ ok: false, message: "No recipe to delete" }, { status: 404 });
+  }
+
+  await prisma.productIngredient.deleteMany({ where: { recipeId: recipe.id } });
+  await prisma.productRecipe.delete({ where: { id: recipe.id } });
+  await prisma.product.update({
+    where: { id: productId },
+    data: { estimatedCostCents: null },
+  });
+
+  await writeAdminAudit({
+    adminId: auth.adminId,
+    adminEmail: auth.email,
+    action: "product.recipe.delete",
+    resource: "product",
+    resourceId: productId,
+    details: { recipeId: recipe.id },
+  });
+
+  return NextResponse.json({ ok: true });
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
