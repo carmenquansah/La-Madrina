@@ -125,9 +125,11 @@ export default function AdminOrderDetailPage() {
       </p>
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "0.75rem" }}>
         <h1 style={{ margin: 0 }}>Order {order.id.slice(0, 8)}…</h1>
-        <button type="button" className="admin-btn admin-btn-sm" onClick={() => window.print()}>
-          Print / PDF
-        </button>
+        <div style={{ display: "flex", gap: "0.5rem" }} className="no-print">
+          <Link href={`/admin/orders/${id}/invoice`} className="admin-btn admin-btn-sm">
+            Invoice
+          </Link>
+        </div>
       </div>
 
       <div id="admin-order-print" className="admin-card" style={{ marginTop: "1rem", padding: "1.25rem" }}>

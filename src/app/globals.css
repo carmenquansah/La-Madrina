@@ -5601,3 +5601,265 @@ a:hover {
   margin: 0.5rem 0 0;
   text-align: center;
 }
+
+/* ─── Invoice page ─────────────────────────────────────────── */
+.inv-shell {
+  min-height: 100vh;
+  background: #f4f0eb;
+  padding: 2rem 1rem 4rem;
+}
+.inv-loading { color: var(--muted); padding: 2rem; }
+
+/* Toolbar */
+.inv-toolbar {
+  max-width: 820px;
+  margin: 0 auto 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.inv-back {
+  font-size: 0.9rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+.inv-back:hover { text-decoration: underline; }
+
+/* Document card */
+.inv-doc {
+  max-width: 820px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.10);
+  padding: 3rem 3.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Decorative accent bar at top */
+.inv-doc::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  background: var(--accent, #b5485a);
+}
+
+/* Header */
+.inv-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e8e0da;
+}
+.inv-brand { display: flex; flex-direction: column; line-height: 1.15; }
+.inv-brand-name {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent, #b5485a);
+  letter-spacing: -0.02em;
+}
+.inv-brand-tagline {
+  font-size: 0.8rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #9a8070;
+}
+.inv-title-block { text-align: right; }
+.inv-title-word {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #2d2019;
+  margin: 0;
+  text-transform: uppercase;
+}
+.inv-number { font-size: 0.82rem; color: #9a8070; margin: 0.25rem 0 0; font-family: monospace; }
+
+/* Meta row */
+.inv-meta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+@media (max-width: 600px) {
+  .inv-meta-row { grid-template-columns: 1fr; gap: 1.25rem; }
+  .inv-doc { padding: 2rem 1.5rem; }
+}
+.inv-meta-block {}
+.inv-meta-right { text-align: right; }
+.inv-meta-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #b8a89a;
+  margin: 0 0 0.4rem;
+}
+.inv-meta-line { font-size: 0.88rem; color: #4a3828; margin: 0 0 0.2rem; line-height: 1.5; }
+.inv-meta-strong { font-weight: 700; color: #2d2019; }
+.inv-meta-key { color: #9a8070; }
+
+/* Status badge */
+.inv-status-badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.inv-status-pending { background: #fef3c7; color: #92400e; }
+.inv-status-confirmed { background: #d1fae5; color: #065f46; }
+.inv-status-completed { background: #e0e7ff; color: #3730a3; }
+.inv-status-cancelled { background: #fee2e2; color: #991b1b; }
+
+/* Items table */
+.inv-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+}
+.inv-th {
+  padding: 0.65rem 0.75rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #9a8070;
+  border-bottom: 2px solid #e8e0da;
+}
+.inv-th-desc { text-align: left; }
+.inv-th-num { text-align: right; }
+.inv-tr:last-child .inv-td { border-bottom: none; }
+.inv-td {
+  padding: 0.85rem 0.75rem;
+  border-bottom: 1px solid #f0e8e2;
+  color: #2d2019;
+  vertical-align: top;
+}
+.inv-td-desc { text-align: left; }
+.inv-td-num { text-align: right; }
+.inv-item-name { display: block; font-weight: 600; }
+.inv-item-spec {
+  display: block;
+  font-size: 0.8rem;
+  color: #9a8070;
+  margin-top: 0.2rem;
+}
+
+/* Total row */
+.inv-total-row .inv-total-label {
+  padding: 1rem 0.75rem;
+  text-align: right;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #9a8070;
+  border-top: 2px solid #e8e0da;
+}
+.inv-total-amount {
+  padding: 1rem 0.75rem;
+  text-align: right;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--accent, #b5485a);
+  border-top: 2px solid #e8e0da;
+}
+
+/* Notes */
+.inv-notes-block {
+  background: #faf7f5;
+  border-left: 3px solid #e8d5c8;
+  border-radius: 0 6px 6px 0;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.75rem;
+}
+.inv-notes-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #b8a89a;
+  margin: 0 0 0.35rem;
+}
+.inv-notes-text { font-size: 0.88rem; color: #4a3828; margin: 0; }
+
+/* Payment instructions */
+.inv-payment-block {
+  background: #fdf6f0;
+  border: 1px solid #f0d8c8;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+}
+.inv-payment-title {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #9a8070;
+  margin: 0 0 0.75rem;
+}
+.inv-payment-line { font-size: 0.9rem; color: #4a3828; margin: 0 0 0.85rem; }
+.inv-momo-box {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid #f0d8c8;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.85rem;
+}
+.inv-momo-number { font-size: 1.4rem; font-weight: 800; font-family: monospace; color: #2d2019; letter-spacing: 0.05em; }
+.inv-momo-name { font-size: 0.85rem; color: #9a8070; }
+.inv-payment-ref { font-size: 0.82rem; color: #7a6055; margin: 0; }
+
+/* PAID stamp */
+.inv-paid-stamp {
+  position: absolute;
+  top: 50%;
+  right: 3.5rem;
+  transform: translateY(-50%) rotate(-15deg);
+  pointer-events: none;
+}
+.inv-paid-stamp span {
+  display: block;
+  font-size: 4rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: rgba(21, 128, 61, 0.12);
+  border: 6px solid rgba(21, 128, 61, 0.12);
+  border-radius: 8px;
+  padding: 0.1em 0.3em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* Footer */
+.inv-footer {
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e8e0da;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #b8a89a;
+}
+.inv-footer p { margin: 0.2rem 0; }
+
+/* Print overrides */
+@media print {
+  .no-print { display: none !important; }
+  .inv-shell { background: #fff; padding: 0; }
+  .inv-doc {
+    max-width: 100%;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 1.5cm 2cm;
+  }
+  .inv-paid-stamp span { color: rgba(21, 128, 61, 0.18); border-color: rgba(21, 128, 61, 0.18); }
+}
