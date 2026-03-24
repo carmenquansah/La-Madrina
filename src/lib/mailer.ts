@@ -25,6 +25,7 @@ export type OrderEmailData = {
   momoNumber: string;
   momoName: string;
   momoNetwork: string;
+  deliveryAddress?: string | null;
 };
 
 function formatGhs(cents: number) {
@@ -75,7 +76,8 @@ function buildCustomerHtml(d: OrderEmailData): string {
       </div>
 
       <div style="font-size:14px;color:#6b3a4a;margin-bottom:24px">
-        <p style="margin:0 0 4px"><strong>Order type:</strong> ${d.orderType === "pickup" ? "Pickup — Mitchel Street, Tema" : "Delivery — request a rider via Yango, Uber, or Bolt to Mitchel Street, Tema"}</p>
+        <p style="margin:0 0 4px"><strong>Order type:</strong> ${d.orderType === "pickup" ? "Pickup — Mitchel Street, Tema" : "Delivery via Yango / Uber / Bolt"}</p>
+        ${d.deliveryAddress ? `<p style="margin:0 0 4px"><strong>Delivery address:</strong> ${d.deliveryAddress}</p>` : ""}
         ${d.preferredDate ? `<p style="margin:0 0 4px"><strong>Preferred date:</strong> ${d.preferredDate}</p>` : ""}
         ${d.notes ? `<p style="margin:0"><strong>Notes:</strong> ${d.notes}</p>` : ""}
       </div>
@@ -104,6 +106,7 @@ function buildOwnerHtml(d: OrderEmailData): string {
   <strong>Email:</strong> ${d.customerEmail}<br>
   <strong>Phone:</strong> ${d.customerPhone}</p>
   <p><strong>Type:</strong> ${d.orderType === "pickup" ? "Pickup" : "Delivery (Yango / Uber / Bolt)"}<br>
+  ${d.deliveryAddress ? `<strong>Delivery address:</strong> ${d.deliveryAddress}<br>` : ""}
   ${d.preferredDate ? `<strong>Preferred date:</strong> ${d.preferredDate}<br>` : ""}
   ${d.notes ? `<strong>Notes:</strong> ${d.notes}` : ""}</p>
   <p style="border-top:1px solid #eee;padding-top:12px">${itemList}</p>

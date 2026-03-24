@@ -64,8 +64,9 @@ model Order {
   totalCents     Int
   notes          String?    // customer-facing / shared order notes
   internalNotes  String?    // staff-only (not shown on public receipt/checkout)
-  channel        String?    // web | walk-in | phone | delivery-app | wholesale
-  orderType      String?    // pickup | delivery
+  channel          String?    // web | walk-in | phone | delivery-app | wholesale
+  orderType        String?    // pickup | delivery
+  deliveryAddress  String?    // required when orderType = delivery
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
   items          OrderItem[]

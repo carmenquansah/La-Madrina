@@ -63,6 +63,7 @@ export type NativeOrderInsert = {
   internalNotes: string | null;
   channel: string | null;
   orderType: string | null;
+  deliveryAddress: string | null;
   items: {
     productId: string;
     quantity: number;
@@ -91,6 +92,7 @@ export async function createOrderWithItemsNative(data: NativeOrderInsert): Promi
       internalNotes: data.internalNotes,
       channel: data.channel,
       orderType: data.orderType,
+      deliveryAddress: data.deliveryAddress,
       createdAt: now,
       updatedAt: now,
     });

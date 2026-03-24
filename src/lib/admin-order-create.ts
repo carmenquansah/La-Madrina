@@ -22,6 +22,7 @@ export const adminCreateOrderSchema = z.object({
     .optional()
     .default("walk-in"),
   orderType: z.enum(["pickup", "delivery"]).optional().nullable(),
+  deliveryAddress: z.string().max(500).optional().nullable(),
   status: z.enum(["pending", "confirmed"]).optional().default("pending"),
   items: z.array(lineSchema).min(1).max(80),
 });
@@ -112,6 +113,7 @@ export async function createAdminOrder(
     internalNotes,
     channel: input.channel,
     orderType: input.orderType ?? null,
+    deliveryAddress: input.deliveryAddress?.trim() ? input.deliveryAddress.trim() : null,
   };
 
   try {

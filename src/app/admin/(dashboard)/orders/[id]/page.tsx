@@ -26,6 +26,7 @@ type Order = {
   internalNotes: string | null;
   channel: string | null;
   orderType: string | null;
+  deliveryAddress: string | null;
   createdAt: string;
   items: OrderItem[];
 };
@@ -149,6 +150,11 @@ export default function AdminOrderDetailPage() {
             <p>Total: {formatGhs(order.totalCents)}</p>
             {order.channel && <p>Channel: {order.channel}</p>}
             {order.orderType && <p>Type: {order.orderType}</p>}
+            {order.deliveryAddress && (
+              <p style={{ marginTop: "0.35rem" }}>
+                <strong>Delivery address:</strong><br />{order.deliveryAddress}
+              </p>
+            )}
           </section>
           <section className="no-print">
             <h2 style={{ fontSize: "1rem", marginBottom: "0.5rem" }}>Status</h2>

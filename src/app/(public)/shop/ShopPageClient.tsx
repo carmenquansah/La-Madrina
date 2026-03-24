@@ -83,6 +83,7 @@ export function ShopPageClient() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
   const [orderType, setOrderType] = useState<"pickup" | "delivery">("pickup");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -279,6 +280,7 @@ export function ShopPageClient() {
           customerPhone: customerPhone.trim(),
           preferredDate: preferredDate || null,
           orderType,
+          deliveryAddress: orderType === "delivery" ? deliveryAddress.trim() || null : null,
           notes: orderNotes.trim() || null,
           items: cartLines.map(({ product, line }) => ({
             productId: product.id,
@@ -572,8 +574,20 @@ export function ShopPageClient() {
                   <input id="co-email" type="email" className="checkout-input" required value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="you@email.com" />
                 </div>
                 <div className="checkout-field">
-                  <label className="checkout-label" htmlFor="co-date">Preferred date</label>
-                  <input id="co-date" type="date" className="checkout-input" value={preferredDate} onChange={(e) => setPreferredDate(e.target.value)} min={new Date().toISOString().split("T")[0]} />
+                  <label className="checkout-label" htmlFor="co-date">Preferred date *</label>
+                  <input
+                    id="co-date"
+                    type="date"
+                    className="checkout-input"
+                    required
+                    value={preferredDate}
+                    onChange={(e) => setPreferredDate(e.target.value)}
+                    min={(() => {
+                      const d = new Date(Date.now() + 48 * 60 * 60 * 1000);
+                      return d.toISOString().split("T")[0];
+                    })()}
+                  />
+                  <p className="checkout-hint">All orders must be placed at least 48 hours in advance.</p>
                 </div>
                 <div className="checkout-field">
                   <p className="checkout-label">Collection *</p>
@@ -588,9 +602,21 @@ export function ShopPageClient() {
                     </label>
                   </div>
                   {orderType === "delivery" && (
-                    <p className="checkout-delivery-hint">
-                      Place your order here, then request a rider through Yango, Uber, or Bolt using our Mitchel Street, Tema address. Include your order reference in the app notes so we know it's you.
-                    </p>
+                    <div className="checkout-delivery-block">
+                      <p className="checkout-delivery-hint">
+                        We will send the order to your address. Request a rider via Yango, Uber, or Bolt — the driver will collect from us and deliver to you.
+                      </p>
+                      <label className="checkout-label" htmlFor="co-address">Delivery address *</label>
+                      <textarea
+                        id="co-address"
+                        className="checkout-input checkout-textarea"
+                        rows={2}
+                        required={orderType === "delivery"}
+                        value={deliveryAddress}
+                        onChange={(e) => setDeliveryAddress(e.target.value)}
+                        placeholder="House / apartment number, street, area, landmark…"
+                      />
+                    </div>
                   )}
                 </div>
                 <div className="checkout-field">

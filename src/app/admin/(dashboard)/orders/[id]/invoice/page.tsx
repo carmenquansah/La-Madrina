@@ -25,6 +25,7 @@ type Order = {
   notes: string | null;
   channel: string | null;
   orderType: string | null;
+  deliveryAddress: string | null;
   createdAt: string;
   items: OrderItem[];
 };
@@ -110,6 +111,12 @@ export default function InvoicePage() {
             <p className="inv-meta-line inv-meta-strong">{order.customerName}</p>
             <p className="inv-meta-line">{order.customerEmail}</p>
             {order.customerPhone && <p className="inv-meta-line">{order.customerPhone}</p>}
+            {order.deliveryAddress && (
+              <>
+                <p className="inv-meta-label" style={{ marginTop: "0.75rem" }}>Delivery Address</p>
+                <p className="inv-meta-line" style={{ whiteSpace: "pre-line" }}>{order.deliveryAddress}</p>
+              </>
+            )}
           </div>
 
           <div className="inv-meta-block inv-meta-right">

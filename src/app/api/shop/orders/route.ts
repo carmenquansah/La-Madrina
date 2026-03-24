@@ -13,15 +13,39 @@ const lineSchema = z.object({
   specifications: z.string().max(4000).optional().nullable(),
 });
 
-const shopOrderSchema = z.object({
-  customerName: z.string().min(1).max(200).trim(),
-  customerEmail: z.string().email().max(320),
-  customerPhone: z.string().min(7).max(50).trim(),
-  preferredDate: z.string().max(40).optional().nullable(),
-  orderType: z.enum(["pickup", "delivery"]),
-  notes: z.string().max(2000).optional().nullable(),
-  items: z.array(lineSchema).min(1).max(40),
-});
+const shopOrderSchema = z
+  .object({
+    customerName: z.string().min(1).max(200).trim(),
+    customerEmail: z.string().email().max(320),
+    customerPhone: z.string().min(7).max(50).trim(),
+    preferredDate: z.string().max(40).optional().nullable(),
+    orderType: z.enum(["pickup", "delivery"]),
+    deliveryAddress: z.string().max(500).optional().nullable(),
+    notes: z.string().max(2000).optional().nullable(),
+    items: z.array(lineSchema).min(1).max(40),
+  })
+  .superRefine((data, ctx) => {
+    // Delivery address is required when orderType is delivery
+    if (data.orderType === "delivery" && !data.deliveryAddress?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Delivery address is required for delivery orders.",
+        path: ["deliveryAddress"],
+      });
+    }
+    // Preferred date must be at least 48 hours from now
+    if (data.preferredDate) {
+      const chosen = new Date(data.preferredDate);
+      const earliest = new Date(Date.now() + 48 * 60 * 60 * 1000);
+      if (chosen < earliest) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Orders must be placed at least 48 hours in advance.",
+          path: ["preferredDate"],
+        });
+      }
+    }
+  });
 
 function getClientIp(req: NextRequest): string {
   return (
@@ -68,6 +92,7 @@ export async function POST(request: NextRequest) {
   try {
     const result = await createAdminOrder({
       ...parsed.data,
+      deliveryAddress: parsed.data.deliveryAddress ?? null,
       channel: "web",
       status: "pending",
       internalNotes: null,
@@ -105,9 +130,10 @@ export async function POST(request: NextRequest) {
           quantity: i.quantity,
           unitPriceCents: i.unitPriceCents,
         })),
-        momoNumber: payment.momoNumber,
-        momoName: payment.momoName,
-        momoNetwork: payment.network,
+          momoNumber: payment.momoNumber,
+          momoName: payment.momoName,
+          momoNetwork: payment.network,
+          deliveryAddress: parsed.data.deliveryAddress ?? null,
       });
     } catch (emailErr) {
       logRouteError("sendOrderEmails", emailErr);
